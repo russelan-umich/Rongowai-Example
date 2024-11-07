@@ -80,8 +80,8 @@ fig.add_trace(go.Scattermapbox(
                 size=8,
                 colorscale='viridis',
                 color=df['NBRCS'],
-                cmin=-0.15,
-                cmax=0.15,
+                cmin=-5.0,
+                cmax=5.0,
                 colorbar=dict(
                     title='NBRCS',
                     titleside='right',
