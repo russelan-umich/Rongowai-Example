@@ -17,6 +17,7 @@ command to download the data into a local directory called 'data':
 podaac-data-downloader  -sd 2024-04-04T00:00:00Z  -ed 2024-04-05T00:00:00Z -c RONGOWAI_L1_SDR_V1.0 -d ./data/
 '''
 import plotly.express as px
+import plotly.graph_objs as go
 import xarray as xr
 import pandas as pd
 import numpy as np
@@ -64,33 +65,38 @@ df = df[df['Quality Flags'] & 1 == 0]
 
 # Plot the refl_peaks and sp positions on a map
 # Create the plot using Plotly Express
-# Use a colorbar that goes between 0 and 0.2
-fig = px.scatter_geo(
-    df,
-    lat='Latitude',
-    lon='Longitude',
-    color='Reflectivity',
-    hover_name='Reflectivity',  # Show temperature on hover
-    color_continuous_scale='Viridis',  # Color scale for temperatures
-    projection="natural earth",
-    range_color=[0, 0.15] 
-)
+fig = go.Figure()
+fig.add_trace(go.Scattermapbox())
+fig.update_layout(mapbox_style='open-street-map',
+        mapbox_center_lon=174.8860, 
+        mapbox_center_lat=-40.9006,
+        mapbox_zoom=4, 
+        title='Rongowai Surface Reflectivity Peaks on 2024-04-05')
 
-# Update layout for better visualization
-fig.update_layout(
-    title='Rongowai Surface Reflectivity Peaks on 2024-04-04',
-    geo=dict(
-        landcolor='rgb(217, 217, 217)',
-        center=dict(lat=-40.9006, lon=174.8860),  # Center on New Zealand
-        projection_scale=9  # Zoom level
-    ),
-    coloraxis_colorbar=dict(
-        title="Surface Reflectivity Peak"
-    )
-)
+fig.add_trace(go.Scattermapbox(
+            lon=df['Longitude'],
+            lat=df['Latitude'],
+            opacity=1,
+            marker=dict(
+                size=8,
+                colorscale='jet',
+                color=df['Reflectivity'],
+                cmin=0,
+                cmax=0.15,
+                colorbar=dict(
+                    title='Reflectivity',
+                    titleside='right',
+                    len=0.75,
+                    y=0.4,  # Set the y position of the colorbar
+                    yanchor='middle'
+                )
+            ),
+            name='Wind Speed',
+            customdata=list(zip(df['Longitude'], df['Latitude'])),
+            hovertemplate='Reflectivity: %{marker.color:.4f} m/s<br>Latitude: %{customdata[1]}<br>Longitude: %{customdata[0]}<extra></extra>', 
+            hoverinfo='text', # Show hover text
+            showlegend=False
+        ))
 
-# Show the interactive plot
 fig.show()
-
-
     
