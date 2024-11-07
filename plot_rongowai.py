@@ -16,7 +16,6 @@ command to download the data into a local directory called 'data':
 
 podaac-data-downloader  -sd 2024-04-04T00:00:00Z  -ed 2024-04-05T00:00:00Z -c RONGOWAI_L1_SDR_V1.0 -d ./data/
 '''
-import plotly.express as px
 import plotly.graph_objs as go
 import xarray as xr
 import pandas as pd
@@ -28,7 +27,7 @@ import os
 # Initialize lists to accumulate data
 all_sp_lats = []
 all_sp_lons = []
-all_refl_peaks = []
+all_nbrcs = []
 all_quality_flags1 = []
 all_times = []
 
@@ -39,39 +38,39 @@ for file in files:
     print(f'Opening {file}')
     ds = xr.open_dataset(file)
 
-    # Grab the specular point position information
+    # Grab the meta information
     all_sp_lats.extend(ds['sp_lat'].values.flatten())
     all_sp_lons.extend(ds['sp_lon'].values.flatten())
-
-    # Grab the peak surface reflectivity
-    all_refl_peaks.extend(np.abs(ds['surface_reflectivity_peak'].values.flatten())) 
-    all_quality_flags1.extend(ds['quality_flags1'].values.flatten())
     all_times.extend(ds['ddm_timestamp_utc'].values.flatten())
+
+    # Grab the data variables
+    all_nbrcs.extend(ds['ddm_nbrcs_v1'].values.flatten())
+    all_quality_flags1.extend(ds['quality_flags1'].values.flatten())
+    
     
 # Add the data from the netCDFs to a dataframe to make it easier to filter
 data = {
     'Latitude': all_sp_lats,
     'Longitude': all_sp_lons,
     'Quality Flags': all_quality_flags1,
-    'Reflectivity': all_refl_peaks 
+    'NBRCS': all_nbrcs 
 }
 df = pd.DataFrame(data)
 
-# Remove all rows with a NaN for the reflectivity or the 1st bit of the quality 
+# Remove all rows with a NaN for the NBRCS or the 1st bit of the quality 
 # flags is set
-df = df.dropna(subset=['Reflectivity'])
+df = df.dropna(subset=['NBRCS'])
 df = df[df['Quality Flags'] & 1 == 0]
 
 
 # Plot the refl_peaks and sp positions on a map
-# Create the plot using Plotly Express
 fig = go.Figure()
 fig.add_trace(go.Scattermapbox())
 fig.update_layout(mapbox_style='open-street-map',
-        mapbox_center_lon=174.8860, 
+        mapbox_center_lon=174.8860,  # Center the map on New Zealand
         mapbox_center_lat=-40.9006,
         mapbox_zoom=4, 
-        title='Rongowai Surface Reflectivity Peaks on 2024-04-05')
+        title='Rongowai NBRCS on 2024-04-05')
 
 fig.add_trace(go.Scattermapbox(
             lon=df['Longitude'],
@@ -79,21 +78,21 @@ fig.add_trace(go.Scattermapbox(
             opacity=1,
             marker=dict(
                 size=8,
-                colorscale='jet',
-                color=df['Reflectivity'],
-                cmin=0,
+                colorscale='viridis',
+                color=df['NBRCS'],
+                cmin=-0.15,
                 cmax=0.15,
                 colorbar=dict(
-                    title='Reflectivity',
+                    title='NBRCS',
                     titleside='right',
                     len=0.75,
                     y=0.4,  # Set the y position of the colorbar
                     yanchor='middle'
                 )
             ),
-            name='Wind Speed',
+            name='NBRCS',
             customdata=list(zip(df['Longitude'], df['Latitude'])),
-            hovertemplate='Reflectivity: %{marker.color:.4f} m/s<br>Latitude: %{customdata[1]}<br>Longitude: %{customdata[0]}<extra></extra>', 
+            hovertemplate='NBRCS: %{marker.color:.4f}<br>Latitude: %{customdata[1]:.2f}<br>Longitude: %{customdata[0]:.2f}<extra></extra>', 
             hoverinfo='text', # Show hover text
             showlegend=False
         ))
