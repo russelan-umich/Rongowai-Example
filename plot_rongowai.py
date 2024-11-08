@@ -73,7 +73,7 @@ The antenna that received the reflected GPS signal associated with the DDM.
 3 = nadir_RHCP
 
 We want to only keep the data where the antenna is Left Hand Circular Polarized
-(LHCP) data.
+(LHCP) co-polarization data.
 '''
 df = df[df['Antenna'] == 2]
 
@@ -98,7 +98,7 @@ fig.add_trace(go.Scattermapbox(
                 cmin=0.0,
                 cmax=0.5,
                 colorbar=dict(
-                    title='Reflectivity',
+                    title='Reflectivity (db/meter^2)',
                     titleside='right',
                     len=0.75,
                     y=0.4,  # Set the y position of the colorbar
@@ -107,7 +107,7 @@ fig.add_trace(go.Scattermapbox(
             ),
             name='Reflectivity',
             customdata=list(zip(df['Longitude'], df['Latitude'])),
-            hovertemplate='Reflectivity: %{marker.color:.4f}<br>Latitude: %{customdata[1]:.2f}<br>Longitude: %{customdata[0]:.2f}<extra></extra>', 
+            hovertemplate='Reflectivity: %{marker.color:.4f} db/meter^2<br>Latitude: %{customdata[1]:.2f}<br>Longitude: %{customdata[0]:.2f}<extra></extra>', 
             hoverinfo='text', # Show hover text
             showlegend=False
         ))
