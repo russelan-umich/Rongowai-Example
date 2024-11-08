@@ -27,13 +27,13 @@ import os
 # Initialize lists to accumulate data
 all_sp_lats = []
 all_sp_lons = []
-all_nbrcs = []
+all_refl = []
 all_quality_flags1 = []
-all_times = []
+all_ants = []
 
 # Open the netCDFs in the 'data' directory
 data_dir = './data/'
-files = glob.glob(os.path.join(data_dir, '20240405*.nc'))
+files = glob.glob(os.path.join(data_dir, '*.nc'))
 for file in files:
     print(f'Opening {file}')
     ds = xr.open_dataset(file)
@@ -41,10 +41,10 @@ for file in files:
     # Grab the meta information
     all_sp_lats.extend(ds['sp_lat'].values.flatten())
     all_sp_lons.extend(ds['sp_lon'].values.flatten())
-    all_times.extend(ds['ddm_timestamp_utc'].values.flatten())
 
     # Grab the data variables
-    all_nbrcs.extend(ds['ddm_nbrcs_v1'].values.flatten())
+    all_refl.extend(ds['surface_reflectivity_peak'].values.flatten())
+    all_ants.extend(ds['ddm_ant'].values.flatten())
     all_quality_flags1.extend(ds['quality_flags1'].values.flatten())
     
     
@@ -53,14 +53,29 @@ data = {
     'Latitude': all_sp_lats,
     'Longitude': all_sp_lons,
     'Quality Flags': all_quality_flags1,
-    'NBRCS': all_nbrcs 
+    'Reflectivity': all_refl ,
+    'Antenna': all_ants
 }
 df = pd.DataFrame(data)
 
-# Remove all rows with a NaN for the NBRCS or the 1st bit of the quality 
+# Remove all rows with a NaN for the Reflectivity or the 1st bit of the quality 
 # flags is set
-df = df.dropna(subset=['NBRCS'])
+df = df.dropna(subset=['Reflectivity'])
 df = df[df['Quality Flags'] & 1 == 0]
+
+'''
+The definition of the antenna column is as follows:
+
+The antenna that received the reflected GPS signal associated with the DDM.
+0 = none
+1 = zenith (never used)
+2 = nadir_LHCP
+3 = nadir_RHCP
+
+We want to only keep the data where the antenna is Left Hand Circular Polarized
+(LHCP) data.
+'''
+df = df[df['Antenna'] == 2]
 
 
 # Plot the refl_peaks and sp positions on a map
@@ -70,7 +85,7 @@ fig.update_layout(mapbox_style='open-street-map',
         mapbox_center_lon=174.8860,  # Center the map on New Zealand
         mapbox_center_lat=-40.9006,
         mapbox_zoom=4, 
-        title='Rongowai NBRCS on 2024-04-05')
+        title='Rongowai Reflectivity on 2024-04-04')
 
 fig.add_trace(go.Scattermapbox(
             lon=df['Longitude'],
@@ -79,20 +94,20 @@ fig.add_trace(go.Scattermapbox(
             marker=dict(
                 size=8,
                 colorscale='viridis',
-                color=df['NBRCS'],
-                cmin=-5.0,
-                cmax=5.0,
+                color=df['Reflectivity'],
+                cmin=0.0,
+                cmax=0.5,
                 colorbar=dict(
-                    title='NBRCS',
+                    title='Reflectivity',
                     titleside='right',
                     len=0.75,
                     y=0.4,  # Set the y position of the colorbar
                     yanchor='middle'
                 )
             ),
-            name='NBRCS',
+            name='Reflectivity',
             customdata=list(zip(df['Longitude'], df['Latitude'])),
-            hovertemplate='NBRCS: %{marker.color:.4f}<br>Latitude: %{customdata[1]:.2f}<br>Longitude: %{customdata[0]:.2f}<extra></extra>', 
+            hovertemplate='Reflectivity: %{marker.color:.4f}<br>Latitude: %{customdata[1]:.2f}<br>Longitude: %{customdata[0]:.2f}<extra></extra>', 
             hoverinfo='text', # Show hover text
             showlegend=False
         ))
