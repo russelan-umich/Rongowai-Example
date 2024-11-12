@@ -73,6 +73,9 @@ The antenna that received the reflected GPS signal associated with the DDM.
 
 We want to only keep the data where the antenna is Left Hand Circular Polarized
 (LHCP) co-polarization data.
+
+According to the Rongowai L1b documentation the co-polarization data is the more 
+stable option.
 '''
 df = df[df['Antenna'] == 2]
 
@@ -93,7 +96,7 @@ fig.add_trace(go.Scattermapbox(
                 size=8,
                 colorscale='viridis',
                 color=df['SNR'],
-                cmin=0.0,
+                cmin=-20.0,
                 cmax=10.0,
                 colorbar=dict(
                     title='Digital Delay Doppler Map (DDM) SNR)',
