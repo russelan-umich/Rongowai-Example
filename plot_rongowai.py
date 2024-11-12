@@ -19,7 +19,6 @@ podaac-data-downloader  -sd 2024-04-04T00:00:00Z  -ed 2024-04-05T00:00:00Z -c RO
 import plotly.graph_objs as go
 import xarray as xr
 import pandas as pd
-import numpy as np
 import glob
 import os
 
@@ -33,7 +32,7 @@ all_ants = []
 
 # Open the netCDFs in the 'data' directory
 data_dir = './data/'
-files = glob.glob(os.path.join(data_dir, '*.nc'))
+files = glob.glob(os.path.join(data_dir, '*_L1.nc'))
 for file in files:
     print(f'Opening {file}')
     ds = xr.open_dataset(file)
@@ -80,7 +79,6 @@ df = df[df['Antenna'] == 2]
 
 # Plot the refl_peaks and sp positions on a map
 fig = go.Figure()
-fig.add_trace(go.Scattermapbox())
 fig.update_layout(mapbox_style='open-street-map',
         mapbox_center_lon=174.8860,  # Center the map on New Zealand
         mapbox_center_lat=-40.9006,
