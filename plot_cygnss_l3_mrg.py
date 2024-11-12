@@ -6,6 +6,7 @@ https://podaac.jpl.nasa.gov/dataset/CYGNSS_L3_MRG_V3.2.1
 '''
 import plotly.graph_objs as go
 import xarray as xr
+import pandas as pd
 import math
 
 # Open the Hurricane Helene netCDF
@@ -18,6 +19,8 @@ lats = ds['lat'].values
 lons = ds['lon'].values
 best_track_storm_center_lat = ds['best_track_storm_center_lat'].values
 best_track_storm_center_lon = ds['best_track_storm_center_lon'].values
+time = ds['time'].values
+
 
 # Print out the shapes of the data
 print(f'Wind speeds shape: {wind_speeds.shape}')
@@ -36,10 +39,13 @@ wind_speeds_to_plot = []
 for i in range(len(lats)):
     for j in range(len(lons)):
 
-        # Only grab grid cells within 10 degrees of the storm center
-        if lats[i] < best_track_storm_center_lat[plot_index] - 10 or lats[i] > best_track_storm_center_lat[plot_index] + 10:
+        # Only grab grid cells within 15 degrees of the storm center
+        threshold_deg = 15
+        if lats[i] < best_track_storm_center_lat[plot_index] - threshold_deg or\
+                lats[i] > best_track_storm_center_lat[plot_index] + threshold_deg:
             continue
-        if lons[j] < best_track_storm_center_lon[plot_index] - 10 or lons[j] > best_track_storm_center_lon[plot_index] + 10:
+        if lons[j] < best_track_storm_center_lon[plot_index] - threshold_deg or \
+                lons[j] > best_track_storm_center_lon[plot_index] + threshold_deg:
             continue
 
         # Ignore grid cells with NaN values
@@ -50,6 +56,9 @@ for i in range(len(lats)):
         lon_plot_wind.append(lons[j])
         wind_speeds_to_plot.append(wind_speeds[plot_index, i, j])
 
+# Convert to a datetime object to make printting easier
+time_to_plot = pd.to_datetime(str(time[plot_index])) # convert to datetime
+
 # Create the figure
 fig = go.Figure()
 fig.update_layout(
@@ -57,8 +66,8 @@ fig.update_layout(
             mapbox_center_lat=best_track_storm_center_lat[plot_index], 
             mapbox_center_lon=best_track_storm_center_lon[plot_index],
             mapbox_zoom=4, 
-            #title={'text': f'CENTER AND R34   〡   {dateOnly}   〡   {timeOnly} UTC', 
-            title={'text': f'L3 MRG Helene', 
+            title={'text': f'Hurricane Helene Wind Speeds | {time_to_plot.strftime("%Y-%m-%d")} '\
+                        f'| {time_to_plot.strftime("%H:%M:%S")} UTC', 
                    'x' : 0.05, 
                    'y' : 0.95, 
                    'xanchor' : 'left', 
