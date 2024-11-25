@@ -37,13 +37,17 @@ for file in files:
     print(f'Opening {file}')
     ds = xr.open_dataset(file)
 
-    # Grab the meta information
+    # Grab the location of the specular point
     all_sp_lats.extend(ds['sp_lat'].values.flatten())
     all_sp_lons.extend(ds['sp_lon'].values.flatten())
 
-    # Grab the data variables
+    # SNR means Signal to Noise Ratio
     all_snr.extend(ds['ddm_snr'].values.flatten())
+
+    # The antenna the captured the sample
     all_ants.extend(ds['ddm_ant'].values.flatten())
+
+    # Indicator if the sample is of good quality
     all_quality_flags1.extend(ds['quality_flags1'].values.flatten())
     
     
